@@ -1,0 +1,19 @@
+# Air configuration file for live reloading
+
+root = "."  # Root directory of the project
+tmp_dir = "tmp"  # Temporary build directory
+
+[build]
+  cmd = "go build -o tmp/main cmd/main.go"  # Build command
+  bin = "tmp/main"  # Binary output location
+  full_bin = "go run cmd/main.go"  # Full binary command
+  delay = 1000  # Delay before restarting (ms)
+  exclude_dir = ["vendor", "tmp", "docs"]  # Directories to exclude from watching
+
+[log]
+  level = "debug"  # Logging level (debug, info, warn, error)
+
+[watcher]
+  dirs = ["."]
+  extensions = ["go", "html", "toml"]  # File extensions to watch
+  ignore = ["tmp", "vendor"]  # Ignore these directories

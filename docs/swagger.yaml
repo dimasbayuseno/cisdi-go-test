@@ -1,0 +1,221 @@
+definitions:
+  github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleCreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - description
+    - name
+    - type
+    type: object
+  github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleUpdateRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.ErrValidationResponse:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data: {}
+      errors:
+        items: {}
+        type: array
+      message:
+        example: Success
+        type: string
+      status:
+        example: OK
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: API Support
+    url: http://www.synapsis.id
+  description: This is a sample server cell for github.com/dimasbayuseno/cisdi-go-test.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: github.com/dimasbayuseno/cisdi-go-test
+  version: "1.0"
+paths:
+  /api/v1/examples:
+    post:
+      consumes:
+      - application/json
+      description: Create Example
+      parameters:
+      - description: Payload Example Create Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "400":
+          description: Error validation field
+          schema:
+            allOf:
+            - $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.ErrValidationResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+      summary: Create Example
+      tags:
+      - Example
+  /api/v1/examples/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Example
+      parameters:
+      - description: Example ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+      summary: Delete Example
+      tags:
+      - Example
+    get:
+      consumes:
+      - application/json
+      description: Get Example By ID
+      parameters:
+      - description: Example ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+      summary: Get Example By ID
+      tags:
+      - Example
+    put:
+      consumes:
+      - application/json
+      description: Update Example
+      parameters:
+      - description: Example ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload Example Update Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_internal_model.ExampleUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "400":
+          description: Error validation field
+          schema:
+            allOf:
+            - $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.ErrValidationResponse'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github.com/dimasbayuseno/cisdi-go-test_pkg_pkgutil.HTTPResponse'
+      summary: Update Example
+      tags:
+      - Example
+swagger: "2.0"
