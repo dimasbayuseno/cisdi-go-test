@@ -26,3 +26,12 @@ const (
 func (User) TableName() string {
 	return "users"
 }
+
+func IsRoleValid(role string) bool {
+	switch UserRole(role) {
+	case RoleWriter, RoleEditor, RoleAdmin:
+		return true
+	default:
+		return false
+	}
+}

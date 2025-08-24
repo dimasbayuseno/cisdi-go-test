@@ -23,7 +23,12 @@ func New(repo user_domain.Repository) *Service {
 func (s Service) Create(ctx context.Context, req model.UserCreateRequest) (err error) {
 	err = validation.Validate(req)
 	if err != nil {
-		err = fmt.Errorf("user.service.Create: failed to validate request: %w", err)
+		err = fmt.Errorf("user.service.Register: failed to validate request: %w", err)
+		return
+	}
+
+	if !entity.IsRoleValid(req.Role) {
+		err = fmt.Errorf("user.service.Register: wrong role: %w", err)
 		return
 	}
 
