@@ -16,8 +16,8 @@ var (
 	ErrEmailOrPasswordInvalid = &ErrWithCode{HTTPStatusCode: http.StatusBadRequest, Message: "email or password invalid"}
 	ErrInvalidUUID            = errors.New("invalid uuid length or format")
 	ErrUnauthorizedAccess     = &ErrWithCode{HTTPStatusCode: http.StatusUnauthorized, Message: "unauthorized access"}
-	ErrDeviceNotFound         = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "device not found"}
 	ErrExampleNotFound        = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "example not found"}
+	ErrUserNotFound           = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "user not found"}
 )
 
 type ErrWithCode struct {

@@ -30,7 +30,7 @@ func (r Repository) Create(ctx context.Context, data entity.Example) error {
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == constant.ErrSQLInvalidUUID || pgxError.Code == constant.ErrSQLFKViolation {
-				err = constant.ErrDeviceNotFound
+				err = constant.ErrExampleNotFound
 			}
 		}
 
@@ -57,7 +57,7 @@ func (r Repository) GetByID(ctx context.Context, id string) (data entity.Example
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == constant.ErrSQLInvalidUUID {
-				err = constant.ErrExampleNotFound
+				err = constant.ErrUserNotFound
 			}
 		}
 		err = fmt.Errorf("example.repository.GetByID: failed to get example: %w", err)

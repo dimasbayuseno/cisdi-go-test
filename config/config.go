@@ -14,6 +14,8 @@ type config struct {
 
 	Service  service  `mapstructure:",squash"`
 	Database database `mapstructure:",squash"`
+
+	JwtSecret string `mapstructure:"JWT_SECRET"`
 }
 
 type database struct {
