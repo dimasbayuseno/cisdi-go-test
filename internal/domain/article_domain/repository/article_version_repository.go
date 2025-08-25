@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/entity"
 	"github.com/dimasbayuseno/cisdi-go-test/pkg/constant"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -27,4 +28,20 @@ func (r Repository) CreateArticleVersion(ctx context.Context, data entity.Articl
 
 	}
 	return nil
+}
+
+func (r Repository) CreateNewArticleVersion(ctx context.Context, data entity.ArticleVersion, newVersionNumber int64) (res entity.ArticleVersion, err error) {
+	var newVersionID uuid.UUID
+	err = r.db.QueryRow(ctx, `
+		INSERT INTO article_versions (article_id, version_number, content) 
+		VALUES ($1, $2, $3) RETURNING id`,
+		data.ArticleID, newVersionNumber, data.Content).Scan(&newVersionID)
+
+	if err != nil {
+		return res, fmt.Errorf("article_version.repository.Create: failed to create article version: %w", err)
+	}
+
+	data.VersionNumber = newVersionNumber
+
+	return res, nil
 }

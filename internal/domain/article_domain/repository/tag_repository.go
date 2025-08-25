@@ -88,3 +88,33 @@ func (r Repository) UpdateTag(ctx context.Context, data entity.Tag) error {
 
 	return nil
 }
+
+func (r Repository) DecrementTag(ctx context.Context, data entity.Tag) error {
+	cmd, err := r.db.Exec(ctx, `
+       UPDATE tags
+       SET usage_count = GREATEST(usage_count - 1, 0)
+       WHERE name = $1
+	`, data.Name)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = constant.ErrTagNotFound
+		}
+
+		var pgxError *pgconn.PgError
+		if errors.As(err, &pgxError) {
+			if pgxError.Code == constant.ErrSQLInvalidUUID {
+				err = constant.ErrTagNotFound
+			}
+		}
+		err = fmt.Errorf("tag.repository.Update: failed to update tag: %w", err)
+		return err
+	}
+
+	if cmd.RowsAffected() == 0 {
+		err = constant.ErrTagNotFound
+		err = fmt.Errorf("tag.repository.Update: failed to update tag: %w", err)
+		return err
+	}
+
+	return nil
+}

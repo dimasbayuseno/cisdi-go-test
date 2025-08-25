@@ -107,3 +107,5 @@ func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (er
 
 	return
 }
+
+//func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (err error) {
