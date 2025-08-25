@@ -1,12 +1,15 @@
 package entity
 
 import (
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"time"
 )
 
+// ========================================== ARTICLE ========================================== //
+
 type Article struct {
-	ID          string     `json:"id"`
+	ID          uuid.UUID  `json:"id"`
 	AuthorID    string     `json:"author_id"`
 	Title       string     `json:"title"`
 	Slug        string     `json:"slug"`
@@ -19,16 +22,16 @@ type Article struct {
 type ArtictleStatus string
 
 const (
-	ArtictleStatusPublished ArtictleStatus = "published"
-	ArticleStatusDraft      ArtictleStatus = "draft"
-	ArticleStatusArchived   ArtictleStatus = "archived"
+	ArticleStatusPublished ArtictleStatus = "published"
+	ArticleStatusDraft     ArtictleStatus = "draft"
+	ArticleStatusArchived  ArtictleStatus = "archived"
 )
 
 func (Article) TableName() string { return "articles" }
 
 func IsArticleStatusValid(status string) bool {
 	switch ArtictleStatus(status) {
-	case ArtictleStatusPublished, ArticleStatusDraft, ArticleStatusArchived:
+	case ArticleStatusPublished, ArticleStatusDraft, ArticleStatusArchived:
 		return true
 	default:
 		return false
@@ -38,12 +41,13 @@ func IsArticleStatusValid(status string) bool {
 // ========================================== ARTICLE VERSION ========================================== //
 
 type ArticleVersion struct {
-	ID            string          `json:"id"`
-	ArticleID     string          `json:"article_id"`
-	VersionNumber string          `json:"version_number"`
-	Content       string          `json:"content"`
-	TrendingScore decimal.Decimal `json:"trending_score"`
-	CreatedAt     time.Time       `json:"created_at"`
+	ID                          string          `json:"id"`
+	ArticleID                   uuid.UUID       `json:"article_id"`
+	VersionNumber               int64           `json:"version_number"`
+	Content                     string          `json:"content"`
+	TrendingScore               decimal.Decimal `json:"trending_score"`
+	CreatedAt                   time.Time       `json:"created_at"`
+	ArticleTagRelationshipScore decimal.Decimal `json:"article_tag_relationship_score"`
 }
 
 func (ArticleVersion) TableName() string { return "article_versions" }
@@ -53,8 +57,28 @@ func (ArticleVersion) TableName() string { return "article_versions" }
 type Tag struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
-	UsageCount string    `json:"usage_count"`
+	UsageCount int64     `json:"usage_count"`
+	LastUsedAt time.Time `json:"last_used_at"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
 func (Tag) TableName() string { return "tags" }
+
+// ========================================== TAG CO-OCCURRENCE ========================================== //
+
+type TagCooccurrence struct {
+	TagAID            string `json:"tag_a_id"`
+	TagBID            string `json:"tag_b_id"`
+	CooccurrenceCount int    `json:"cooccurrence_count"`
+}
+
+func (TagCooccurrence) TableName() string { return "tag_cooccurrence" }
+
+// ========================================== ARTICLE VERSION TAG ========================================== //
+
+type ArticleVersionTag struct {
+	ArticleVersionID string `json:"article_version_id"`
+	TagID            string `json:"tag_id"`
+}
+
+func (ArticleVersionTag) TableName() string { return "article_version_tags" }

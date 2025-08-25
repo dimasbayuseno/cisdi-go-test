@@ -10,11 +10,14 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (r Repository) CreateTag(ctx context.Context, data entity.Tag) error {
-	_, err := r.db.Exec(ctx, `
-		INSERT INTO tags (name, usage_count) 
-		VALUES ($1, $2)`,
-		data.Name, data.UsageCount)
+func (r Repository) CreateTag(ctx context.Context, data entity.Tag) (*entity.Tag, error) {
+	var tag entity.Tag
+	err := r.db.QueryRow(ctx, `
+        INSERT INTO tags (name, usage_count) 
+        VALUES ($1, $2)
+        RETURNING id, name, usage_count, created_at`,
+		data.Name, data.UsageCount).Scan(
+		&tag.ID, &tag.Name, &tag.UsageCount, &tag.CreatedAt)
 
 	if err != nil {
 		var pgxError *pgconn.PgError
@@ -24,10 +27,10 @@ func (r Repository) CreateTag(ctx context.Context, data entity.Tag) error {
 			}
 		}
 		err = fmt.Errorf("tag.repository.Create: failed to create tag: %w", err)
-		return err
-
+		return nil, err
 	}
-	return nil
+
+	return &tag, nil
 }
 
 func (r Repository) GetByNameTag(ctx context.Context, name string) (data entity.Tag, err error) {
@@ -40,7 +43,7 @@ func (r Repository) GetByNameTag(ctx context.Context, name string) (data entity.
 	err = r.db.QueryRow(ctx, query, name).Scan(&data.ID, &data.Name, &data.UsageCount, &data.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = constant.ErrTagNotFound
+			err = pgx.ErrNoRows
 		}
 
 		var pgxError *pgconn.PgError
@@ -59,9 +62,9 @@ func (r Repository) GetByNameTag(ctx context.Context, name string) (data entity.
 func (r Repository) UpdateTag(ctx context.Context, data entity.Tag) error {
 	cmd, err := r.db.Exec(ctx, `
 		UPDATE tags
-		SET usage_count = usage_count + 1
-		WHERE name = $1
-	`, data.Name)
+		SET usage_count = usage_count + 1, last_used_at = $1
+		WHERE name = $2
+	`, data.LastUsedAt, data.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = constant.ErrTagNotFound

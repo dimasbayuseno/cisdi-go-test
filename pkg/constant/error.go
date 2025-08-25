@@ -19,6 +19,8 @@ var (
 	ErrExampleNotFound        = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "example not found"}
 	ErrUserNotFound           = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "user not found"}
 	ErrTagNotFound            = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "tag not found"}
+	ErrFailedTx               = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "tag not found"}
+	ErrInvalidStatusArticle   = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "status invalid"}
 )
 
 type ErrWithCode struct {

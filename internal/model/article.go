@@ -15,3 +15,11 @@ type ArticleUpdateRequest struct {
 	Content  string   `json:"content" validate:"required"`
 	TagNames []string `json:"tag_names" validate:"required,min=1,dive,required"`
 }
+
+type ArticleCreateResponse struct {
+	Title    string   `json:"title" validate:"required"`
+	Status   string   `json:"status" validate:"required"`
+	Content  string   `json:"content" validate:"required"`
+	TagNames []string `json:"tag_names" validate:"required,min=1,dive,required"`
+	Version  int64    `json:"version" validate:"required"`
+}
