@@ -1,9 +1,19 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
+CREATE TABLE article_version_tags (
+                                      article_version_id UUID NOT NULL REFERENCES article_versions(id) ON DELETE CASCADE,
+                                      tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                                      article_tag_relationship_score FLOAT DEFAULT 0.0,
+                                      PRIMARY KEY (article_version_id, tag_id)
+);
+
+CREATE INDEX idx_article_version_tags_article_version_id ON article_version_tags(article_version_id);
+CREATE INDEX idx_article_version_tags_tag_id ON article_version_tags(tag_id);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP INDEX IF EXISTS idx_article_version_tags_tag_id;
+DROP INDEX IF EXISTS idx_article_version_tags_article_version_id;
+DROP TABLE IF EXISTS article_version_tags;
 -- +goose StatementEnd

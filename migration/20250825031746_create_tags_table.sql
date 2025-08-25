@@ -1,9 +1,14 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
+CREATE TABLE tags (
+                      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                      name VARCHAR(100) UNIQUE NOT NULL,
+                      usage_count INT DEFAULT 0,
+                      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE IF EXISTS tags;
 -- +goose StatementEnd
