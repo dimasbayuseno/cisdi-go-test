@@ -26,7 +26,6 @@ func (s Service) Create(ctx context.Context, req model.UserCreateRequest) (err e
 		err = fmt.Errorf("user.service.Register: failed to validate request: %w", err)
 		return
 	}
-
 	if !entity.IsRoleValid(req.Role) {
 		err = fmt.Errorf("user.service.Register: wrong role: %w", err)
 		return

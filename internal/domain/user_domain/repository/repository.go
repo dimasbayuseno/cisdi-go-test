@@ -151,3 +151,15 @@ func (r Repository) GetByUsername(ctx context.Context, username string) (data en
 
 	return
 }
+
+func (r Repository) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+func (r Repository) WithTX(tx pgx.Tx) *Repository {
+	return &Repository{db: tx}
+}
