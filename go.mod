@@ -15,6 +15,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pressly/goose/v3 v3.19.2
 	github.com/rs/zerolog v1.32.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/viper v1.18.2
 	github.com/swaggo/swag v1.16.3
 	github.com/urfave/cli/v2 v2.27.1

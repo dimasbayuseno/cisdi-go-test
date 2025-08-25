@@ -18,6 +18,7 @@ var (
 	ErrUnauthorizedAccess     = &ErrWithCode{HTTPStatusCode: http.StatusUnauthorized, Message: "unauthorized access"}
 	ErrExampleNotFound        = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "example not found"}
 	ErrUserNotFound           = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "user not found"}
+	ErrTagNotFound            = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "tag not found"}
 )
 
 type ErrWithCode struct {
