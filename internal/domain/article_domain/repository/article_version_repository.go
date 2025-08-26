@@ -45,3 +45,12 @@ func (r Repository) CreateNewArticleVersion(ctx context.Context, data entity.Art
 
 	return res, nil
 }
+
+func (r Repository) GetLastArticleVersionNumber(ctx context.Context, articleID uuid.UUID) (data entity.ArticleVersion, err error) {
+	err = r.db.QueryRow(ctx, `SELECT id, article_id, version_number, content FROM article_versions WHERE article_id = $1`, articleID).Scan(&data.ID, &data.ArticleID, &data.VersionNumber, &data.Content)
+	if err != nil {
+		return data, fmt.Errorf("repository.GetLastArticleVersionNumber: failed to get last version number: %w", err)
+	}
+
+	return data, nil
+}

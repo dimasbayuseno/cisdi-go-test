@@ -108,4 +108,28 @@ func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (er
 	return
 }
 
-//func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (err error) {
+func (s Service) GetDetailArticleBySlug(ctx context.Context, slug string) (response model.ArticleDetailResponse, err error) {
+	article, err := s.repo.GetArticleBySlug(ctx, slug)
+	if err != nil {
+		return
+	}
+	articleVersion, err := s.repo.GetLastArticleVersionNumber(ctx, article.ID)
+	if err != nil {
+		return
+	}
+
+	tags, err := s.repo.GetTagsByArticleVersionID(ctx, articleVersion.ID)
+
+	response = model.ArticleDetailResponse{
+		ID:            article.ID,
+		AuthorID:      article.AuthorID,
+		Title:         article.Title,
+		Slug:          article.Slug,
+		Status:        article.Status,
+		Content:       articleVersion.Content,
+		PublishedAt:   article.PublishedAt,
+		VersionNumber: articleVersion.VersionNumber,
+		Tags:          tags,
+	}
+	return
+}

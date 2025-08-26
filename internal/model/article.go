@@ -1,17 +1,18 @@
 package model
 
 import (
+	"github.com/dimasbayuseno/cisdi-go-test/internal/entity"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"time"
 )
 
 type ArticleCreateRequest struct {
-	AuthorID string   `json:"author_id" validate:"required"`
-	Title    string   `json:"title" validate:"required"`
-	Status   string   `json:"status" validate:"required"`
-	Content  string   `json:"content" validate:"required"`
-	TagNames []string `json:"tag_names" validate:"required,min=1,dive,required"`
+	AuthorID uuid.UUID `json:"author_id" validate:"required"`
+	Title    string    `json:"title" validate:"required"`
+	Status   string    `json:"status" validate:"required"`
+	Content  string    `json:"content" validate:"required"`
+	TagNames []string  `json:"tag_names" validate:"required,min=1,dive,required"`
 }
 
 type ArticleUpdateRequest struct {
@@ -71,5 +72,5 @@ type ArticleDetailResponse struct {
 	PublishedAt                 *time.Time      `json:"published_at"`
 	VersionNumber               int64           `json:"version_number"`
 	ArticleTagRelationshipScore decimal.Decimal `json:"article_tag_relationship_score"`
-	Tags                        []TagResponse   `json:"tags"`
+	Tags                        []entity.Tag    `json:"tags"`
 }

@@ -272,12 +272,11 @@ func (r Repository) GetArticleDetails(ctx context.Context, articleID uuid.UUID, 
 	return &article, nil
 }
 
-func (r Repository) GetLastArticleVersionNumber(ctx context.Context, articleID uuid.UUID) (int64, error) {
-	var lastVersionNumber int64
-	err := r.db.QueryRow(ctx, `SELECT COALESCE(MAX(version_number), 0) FROM article_versions WHERE article_id = $1`, articleID).Scan(&lastVersionNumber)
+func (r Repository) GetArticleBySlug(ctx context.Context, slug string) (data entity.Article, err error) {
+	err = r.db.QueryRow(ctx, `SELECT id, author_id, title, slug, status, published_at FROM articles WHERE slug = $1 AND status = $2`, slug, entity.ArticleStatusPublished).Scan(&data.ID, &data.AuthorID, &data.Title, &data.Slug, &data.Status, &data.PublishedAt)
 	if err != nil {
-		return 0, fmt.Errorf("repository.GetLastArticleVersionNumber: failed to get last version number: %w", err)
+		return data, fmt.Errorf("repository.GetLastArticleVersionNumber: failed to get last version number: %w", err)
 	}
 
-	return lastVersionNumber, nil
+	return data, nil
 }

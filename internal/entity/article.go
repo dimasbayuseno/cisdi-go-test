@@ -10,7 +10,7 @@ import (
 
 type Article struct {
 	ID          uuid.UUID  `json:"id"`
-	AuthorID    string     `json:"author_id"`
+	AuthorID    uuid.UUID  `json:"author_id"`
 	Title       string     `json:"title"`
 	Slug        string     `json:"slug"`
 	Status      string     `json:"status"`
@@ -41,7 +41,7 @@ func IsArticleStatusValid(status string) bool {
 // ========================================== ARTICLE VERSION ========================================== //
 
 type ArticleVersion struct {
-	ID                          string          `json:"id"`
+	ID                          uuid.UUID       `json:"id"`
 	ArticleID                   uuid.UUID       `json:"article_id"`
 	VersionNumber               int64           `json:"version_number"`
 	Content                     string          `json:"content"`

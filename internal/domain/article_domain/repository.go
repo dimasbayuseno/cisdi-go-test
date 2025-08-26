@@ -21,4 +21,7 @@ type Repository interface {
 	CreateNewArticleVersion(ctx context.Context, data entity.ArticleVersion, newVersionNumber int64) (res entity.ArticleVersion, err error)
 	GetArticles(ctx context.Context, role string, currentUserID uuid.UUID, params model.GetArticlesRequest) ([]model.ArticleResponse, error)
 	GetArticleDetails(ctx context.Context, articleID uuid.UUID, role string, currentUserID uuid.UUID) (*model.ArticleDetailResponse, error)
+	GetLastArticleVersionNumber(ctx context.Context, articleID uuid.UUID) (data entity.ArticleVersion, err error)
+	GetArticleBySlug(ctx context.Context, slug string) (data entity.Article, err error)
+	GetTagsByArticleVersionID(ctx context.Context, versionID uuid.UUID) ([]entity.Tag, error)
 }
