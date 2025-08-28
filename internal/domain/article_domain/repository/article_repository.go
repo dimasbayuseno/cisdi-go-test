@@ -62,9 +62,9 @@ func (r Repository) Create(ctx context.Context, data entity.Article) (*entity.Ar
 }
 
 func (r Repository) GetArticles(ctx context.Context, role string, currentUserID uuid.UUID, params model.GetArticlesRequest) ([]model.ArticleResponse, error) {
-
-	baseQuery := `
-		SELECT
+	query := `
+	WITH latest_articles AS (
+		SELECT DISTINCT ON (a.id)
 			a.id,
 			a.author_id,
 			a.title,
@@ -84,36 +84,36 @@ func (r Repository) GetArticles(ctx context.Context, role string, currentUserID 
 				),
 				'[]'::jsonb
 			) AS tags
-		FROM
-			articles a
-		JOIN
-			article_versions av ON a.id = av.article_id
-	`
-	args := []interface{}{}
-	whereClauses := []string{}
+		FROM articles a
+		JOIN article_versions av ON a.id = av.article_id`
+
+	var joins []string
+	var whereClauses []string
+	var args []interface{}
 	argCount := 1
 
 	if params.TagID != uuid.Nil {
-		baseQuery += " JOIN article_version_tags avt_filter ON av.id = avt_filter.article_version_id "
+		joins = append(joins, "JOIN article_version_tags avt_filter ON av.id = avt_filter.article_version_id")
 		whereClauses = append(whereClauses, fmt.Sprintf("avt_filter.tag_id = $%d", argCount))
 		args = append(args, params.TagID)
 		argCount++
 	}
 
 	switch role {
-	case "editor":
-		clause := fmt.Sprintf("(a.status IN ('published', 'archived') OR (a.status = 'draft' AND a.author_id = $%d))", argCount)
-		whereClauses = append(whereClauses, clause)
-		args = append(args, currentUserID)
-		argCount++
 	case "admin":
 		if params.Status != "" {
 			whereClauses = append(whereClauses, fmt.Sprintf("a.status = $%d", argCount))
 			args = append(args, params.Status)
 			argCount++
 		}
+	case "editor":
+		whereClauses = append(whereClauses, fmt.Sprintf("(a.status IN ('published', 'archived') OR (a.status = 'draft' AND a.author_id = $%d))", argCount))
+		args = append(args, currentUserID)
+		argCount++
 	default:
-		whereClauses = append(whereClauses, fmt.Sprintf("a.status = '%s'", entity.ArticleStatusPublished))
+		whereClauses = append(whereClauses, fmt.Sprintf("a.status = $%d", argCount))
+		args = append(args, "published")
+		argCount++
 	}
 
 	if params.AuthorID != uuid.Nil {
@@ -121,45 +121,54 @@ func (r Repository) GetArticles(ctx context.Context, role string, currentUserID 
 		args = append(args, params.AuthorID)
 		argCount++
 	}
+
+	if len(joins) > 0 {
+		query += " " + strings.Join(joins, " ")
+	}
 	if len(whereClauses) > 0 {
-		baseQuery += " WHERE " + strings.Join(whereClauses, " AND ")
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	distinctQuery := fmt.Sprintf("SELECT DISTINCT ON (id) * FROM (%s) AS all_versions ORDER BY id, version_number DESC", baseQuery)
-	finalQuery := fmt.Sprintf("SELECT * FROM (%s) AS latest_articles", distinctQuery)
+	query += " ORDER BY a.id, av.version_number DESC"
+	query += ") SELECT * FROM latest_articles"
 
-	validSortColumns := map[string]string{
+	validSorts := map[string]string{
 		"created_at":   "created_at",
 		"updated_at":   "updated_at",
 		"published_at": "published_at",
 		"score":        "article_tag_relationship_score",
 	}
-	if col, ok := validSortColumns[params.SortBy]; ok {
+
+	if sortCol, ok := validSorts[params.SortBy]; ok {
 		sortOrder := "DESC"
 		if strings.ToUpper(params.SortOrder) == "ASC" {
 			sortOrder = "ASC"
 		}
-		finalQuery += fmt.Sprintf(" ORDER BY %s %s", col, sortOrder)
+		query += fmt.Sprintf(" ORDER BY %s %s", sortCol, sortOrder)
 	} else {
-		finalQuery += " ORDER BY published_at DESC"
+		query += " ORDER BY published_at DESC"
 	}
 
 	if params.Limit > 0 {
-		finalQuery += fmt.Sprintf(" LIMIT $%d", argCount)
+
+		if params.Limit > 100 {
+			params.Limit = 100
+		}
+		query += fmt.Sprintf(" LIMIT $%d", argCount)
 		args = append(args, params.Limit)
 		argCount++
 	}
+
 	if params.Page > 0 && params.Limit > 0 {
 		offset := (params.Page - 1) * params.Limit
-		finalQuery += fmt.Sprintf(" OFFSET $%d", argCount)
+		query += fmt.Sprintf(" OFFSET $%d", argCount)
 		args = append(args, offset)
 		argCount++
 	}
 
-	rows, err := r.db.Query(ctx, finalQuery, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		err = fmt.Errorf("article.repository.GetArticles: failed to query articles: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("article.repository.GetArticles: failed to query: %w", err)
 	}
 	defer rows.Close()
 
@@ -182,21 +191,18 @@ func (r Repository) GetArticles(ctx context.Context, role string, currentUserID 
 			&tagsJSON,
 		)
 		if err != nil {
-			err = fmt.Errorf("article.repository.GetArticles: failed to scan article row: %w", err)
-			return nil, err
+			return nil, fmt.Errorf("article.repository.GetArticles: failed to scan row: %w", err)
 		}
 
 		if err := json.Unmarshal(tagsJSON, &article.Tags); err != nil {
-			err = fmt.Errorf("article.repository.GetArticles: failed to unmarshal tags: %w", err)
-			return nil, err
+			return nil, fmt.Errorf("article.repository.GetArticles: failed to parse tags: %w", err)
 		}
 
 		articles = append(articles, article)
 	}
 
 	if err = rows.Err(); err != nil {
-		err = fmt.Errorf("article.repository.GetArticles: error iterating rows: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("article.repository.GetArticles: iteration error: %w", err)
 	}
 
 	return articles, nil
@@ -282,4 +288,148 @@ func (r Repository) GetArticleBySlug(ctx context.Context, slug string) (data ent
 	}
 
 	return data, nil
+}
+
+func (r Repository) GetArticleByID(ctx context.Context, id string) (data entity.Article, err error) {
+	err = r.db.QueryRow(ctx, `SELECT id, author_id, title, slug, status, published_at FROM articles WHERE id = $1`, id).Scan(&data.ID, &data.AuthorID, &data.Title, &data.Slug, &data.Status, &data.PublishedAt)
+	if err != nil {
+		return data, fmt.Errorf("repository.GetArticleBySlug: failed to get article by id: %w", err)
+	}
+
+	return data, nil
+}
+
+func (r Repository) GetArticlesCount(ctx context.Context, role string, currentUserID uuid.UUID, params model.GetArticlesRequest) (int, error) {
+	query := `
+	WITH latest_articles AS (
+		SELECT DISTINCT ON (a.id)
+			a.id,
+			a.author_id,
+			a.status,
+			av.version_number,
+			av.article_tag_relationship_score
+		FROM articles a
+		JOIN article_versions av ON a.id = av.article_id`
+
+	var joins []string
+	var whereClauses []string
+	var args []interface{}
+	argCount := 1
+
+	if params.TagID != uuid.Nil {
+		joins = append(joins, "JOIN article_version_tags avt_filter ON av.id = avt_filter.article_version_id")
+		whereClauses = append(whereClauses, fmt.Sprintf("avt_filter.tag_id = $%d", argCount))
+		args = append(args, params.TagID)
+		argCount++
+	}
+
+	switch role {
+	case "admin":
+		if params.Status != "" {
+			whereClauses = append(whereClauses, fmt.Sprintf("a.status = $%d", argCount))
+			args = append(args, params.Status)
+			argCount++
+		}
+	case "editor":
+		whereClauses = append(whereClauses,
+			fmt.Sprintf("(a.status IN ('published', 'archived') OR (a.status = 'draft' AND a.author_id = $%d))", argCount),
+		)
+		args = append(args, currentUserID)
+		argCount++
+	default:
+		whereClauses = append(whereClauses, fmt.Sprintf("a.status = $%d", argCount))
+		args = append(args, "published")
+		argCount++
+	}
+
+	if params.AuthorID != uuid.Nil {
+		whereClauses = append(whereClauses, fmt.Sprintf("a.author_id = $%d", argCount))
+		args = append(args, params.AuthorID)
+		argCount++
+	}
+
+	if len(joins) > 0 {
+		query += " " + strings.Join(joins, " ")
+	}
+	if len(whereClauses) > 0 {
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	query += " ORDER BY a.id, av.version_number DESC"
+	query += ") SELECT COUNT(*) FROM latest_articles"
+
+	var count int
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("article.repository.GetArticlesCount: failed to query: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r Repository) UpdateArticleStatusWithPublishDate(ctx context.Context, id uuid.UUID, status string) error {
+
+	validStatuses := map[string]bool{
+		string(entity.ArticleStatusDraft):     true,
+		string(entity.ArticleStatusPublished): true,
+		string(entity.ArticleStatusArchived):  true,
+	}
+
+	if !validStatuses[status] {
+		return fmt.Errorf("repository.UpdateArticleStatusWithPublishDate: invalid status: %s", status)
+	}
+
+	var query string
+	var args []interface{}
+
+	if status == string(entity.ArticleStatusPublished) {
+
+		query = `UPDATE articles SET status = $1, published_at = NOW(), updated_at = NOW() WHERE id = $2`
+		args = []interface{}{status, id}
+	} else {
+
+		query = `UPDATE articles SET status = $1, updated_at = NOW() WHERE id = $2`
+		args = []interface{}{status, id}
+	}
+
+	result, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("repository.UpdateArticleStatusWithPublishDate: failed to update article status: %w", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("repository.UpdateArticleStatusWithPublishDate: article with id %s not found", id)
+	}
+
+	return nil
+}
+
+func (r Repository) Delete(ctx context.Context, id uuid.UUID) error {
+	cmd, err := r.db.Exec(ctx, `
+		DELETE FROM articles
+		WHERE id = $1
+	`, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = constant.ErrUserNotFound
+		}
+
+		var pgxError *pgconn.PgError
+		if errors.As(err, &pgxError) {
+			if pgxError.Code == constant.ErrSQLInvalidUUID {
+				err = constant.ErrArticleNotFound
+			}
+		}
+		err = fmt.Errorf("article.repository.Delete: failed to delete article: %w", err)
+		return err
+	}
+
+	if cmd.RowsAffected() == 0 {
+		err = constant.ErrUserNotFound
+		err = fmt.Errorf("article.repository.Update: failed to update article: %w", err)
+		return err
+	}
+
+	return nil
 }

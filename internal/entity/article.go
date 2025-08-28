@@ -21,10 +21,15 @@ type Article struct {
 
 type ArticleStatus string
 
+type GetBy string
+
 const (
 	ArticleStatusPublished ArticleStatus = "published"
 	ArticleStatusDraft     ArticleStatus = "draft"
 	ArticleStatusArchived  ArticleStatus = "archived"
+
+	GetBySlug GetBy = "slug"
+	GetByID   GetBy = "id"
 )
 
 func (Article) TableName() string { return "articles" }

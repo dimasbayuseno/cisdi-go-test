@@ -30,14 +30,35 @@ func (h HTTPResponse) MarshalJSON() ([]byte, error) {
 }
 
 type PaginationResponse struct {
-	TotalData int `json:"total_data" example:"1"`
-	TotalPage int `json:"total_page" example:"1"`
-	Page      int `json:"page" example:"1"`
-	Limit     int `json:"limit" example:"10"`
-	Data      any `json:"data,omitempty" `
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	TotalCount int64 `json:"total_count"`
+	TotalPages int   `json:"total_pages"`
+	HasNext    bool  `json:"has_next"`
+	HasPrev    bool  `json:"has_prev"`
 }
 
 type ErrValidationResponse struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
+}
+
+func BuildPagination(page, limit int, totalCount int64) PaginationResponse {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	totalPages := int((totalCount + int64(limit) - 1) / int64(limit))
+
+	hasPrev := page > 1
+	hasNext := page < totalPages
+
+	return PaginationResponse{
+		Page:       page,
+		Limit:      limit,
+		TotalCount: totalCount,
+		TotalPages: totalPages,
+		HasNext:    hasNext,
+		HasPrev:    hasPrev,
+	}
 }

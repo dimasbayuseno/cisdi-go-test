@@ -65,3 +65,61 @@ func (r Repository) GetLastArticleVersionNumber(ctx context.Context, articleID u
 
 	return data, nil
 }
+
+func (r Repository) GetArticleVersionByNumber(ctx context.Context, articleID uuid.UUID, versionNumber int) (data entity.ArticleVersion, err error) {
+	err = r.db.QueryRow(ctx, `SELECT id, article_id, version_number, content FROM article_versions WHERE article_id = $1 AND version_number = $1`, articleID, versionNumber).Scan(&data.ID, &data.ArticleID, &data.VersionNumber, &data.Content)
+	if err != nil {
+		return data, fmt.Errorf("repository.GetLastArticleVersionNumber: failed to get last version number: %w", err)
+	}
+
+	return data, nil
+}
+
+func (r Repository) GetArticleVersions(ctx context.Context, articleID uuid.UUID) ([]entity.ArticleVersion, error) {
+	if articleID == uuid.Nil {
+		return nil, fmt.Errorf("repository.GetArticleVersionsSimple: article ID is required")
+	}
+
+	query := `
+		SELECT 
+			id,
+			article_id,
+			version_number,
+			content,
+			article_tag_relationship_score,
+			created_at
+		FROM article_versions
+		WHERE article_id = $1
+		ORDER BY version_number DESC`
+
+	rows, err := r.db.Query(ctx, query, articleID)
+	if err != nil {
+		return nil, fmt.Errorf("repository.GetArticleVersionsSimple: failed to query versions: %w", err)
+	}
+	defer rows.Close()
+
+	var versions []entity.ArticleVersion
+	for rows.Next() {
+		var version entity.ArticleVersion
+
+		err := rows.Scan(
+			&version.ID,
+			&version.ArticleID,
+			&version.VersionNumber,
+			&version.Content,
+			&version.ArticleTagRelationshipScore,
+			&version.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("repository.GetArticleVersionsSimple: failed to scan version: %w", err)
+		}
+
+		versions = append(versions, version)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("repository.GetArticleVersionsSimple: iteration error: %w", err)
+	}
+
+	return versions, nil
+}

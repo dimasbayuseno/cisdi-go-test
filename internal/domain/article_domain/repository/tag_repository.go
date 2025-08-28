@@ -118,3 +118,71 @@ func (r Repository) DecrementTag(ctx context.Context, data entity.Tag) error {
 
 	return nil
 }
+
+func (r Repository) GetAllTags(ctx context.Context) ([]entity.Tag, error) {
+	query := `
+		SELECT 
+			id,
+			name,
+			usage_count,
+			last_used_at,
+			created_at
+		FROM tags
+		ORDER BY name DESC `
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("repository.GetAllTags: failed to query tags: %w", err)
+	}
+	defer rows.Close()
+
+	var tags []entity.Tag
+	for rows.Next() {
+		var tag entity.Tag
+
+		err := rows.Scan(
+			&tag.ID,
+			&tag.Name,
+			&tag.UsageCount,
+			&tag.LastUsedAt,
+			&tag.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("repository.GetAllTags: failed to scan tag: %w", err)
+		}
+
+		tags = append(tags, tag)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("repository.GetAllTags: iteration error: %w", err)
+	}
+
+	return tags, nil
+}
+
+func (r Repository) GetTagByID(ctx context.Context, id string) (data entity.Tag, err error) {
+	query := `
+		SELECT id, name, usage_count, created_at
+		FROM tags
+		WHERE id = $1
+	`
+
+	err = r.db.QueryRow(ctx, query, id).Scan(&data.ID, &data.Name, &data.UsageCount, &data.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return data, constant.ErrTagNotFound
+		}
+
+		var pgxError *pgconn.PgError
+		if errors.As(err, &pgxError) {
+			if pgxError.Code == constant.ErrSQLInvalidUUID {
+				return data, constant.ErrTagNotFound
+			}
+		}
+		err = fmt.Errorf("tag.repository.GetByName: failed to get tag: %w", err)
+		return
+	}
+
+	return
+}

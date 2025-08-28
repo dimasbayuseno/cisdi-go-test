@@ -60,4 +60,17 @@ func (s Server) RoutesArticle(route fiber.Router, ctrl *article_domain.Controlle
 	v1 := route.Group("/v1")
 	articleV1 := v1.Group("/article")
 	articleV1.Post("/create", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.Create)
+	articleV1.Post("/create-version/:id", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.CreateNewArticleVersion)
+	articleV1.Get("", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetAll)
+	articleV1.Put("/update/:id", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.Update)
+	articleV1.Get("/:slug", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetBySlug)
+	articleV1.Get("/:id/:version", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetSpecificArticleVersion)
+	articleV1.Get("/all-version/:id", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetAllArticleVersion)
+	articleV1.Get("/:slug", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetBySlug)
+	articleV1.Delete("/delete/:id", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.Delete)
+
+	tagV1 := v1.Group("/tag")
+	tagV1.Post("/create", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.CreateNewTag)
+	tagV1.Get("/:id", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetTagByID)
+	tagV1.Get("", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.GetAllTag)
 }
