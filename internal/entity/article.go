@@ -19,18 +19,18 @@ type Article struct {
 	PublishedAt *time.Time `json:"published_at"`
 }
 
-type ArtictleStatus string
+type ArticleStatus string
 
 const (
-	ArticleStatusPublished ArtictleStatus = "published"
-	ArticleStatusDraft     ArtictleStatus = "draft"
-	ArticleStatusArchived  ArtictleStatus = "archived"
+	ArticleStatusPublished ArticleStatus = "published"
+	ArticleStatusDraft     ArticleStatus = "draft"
+	ArticleStatusArchived  ArticleStatus = "archived"
 )
 
 func (Article) TableName() string { return "articles" }
 
 func IsArticleStatusValid(status string) bool {
-	switch ArtictleStatus(status) {
+	switch ArticleStatus(status) {
 	case ArticleStatusPublished, ArticleStatusDraft, ArticleStatusArchived:
 		return true
 	default:
@@ -55,7 +55,7 @@ func (ArticleVersion) TableName() string { return "article_versions" }
 // ========================================== TAG ========================================== //
 
 type Tag struct {
-	ID         string    `json:"id"`
+	ID         uuid.UUID `json:"id"`
 	Name       string    `json:"name"`
 	UsageCount int64     `json:"usage_count"`
 	LastUsedAt time.Time `json:"last_used_at"`
@@ -67,9 +67,9 @@ func (Tag) TableName() string { return "tags" }
 // ========================================== TAG CO-OCCURRENCE ========================================== //
 
 type TagCooccurrence struct {
-	TagAID            string `json:"tag_a_id"`
-	TagBID            string `json:"tag_b_id"`
-	CooccurrenceCount int    `json:"cooccurrence_count"`
+	TagAID            uuid.UUID `json:"tag_a_id"`
+	TagBID            uuid.UUID `json:"tag_b_id"`
+	CooccurrenceCount int       `json:"cooccurrence_count"`
 }
 
 func (TagCooccurrence) TableName() string { return "tag_cooccurrence" }
@@ -77,8 +77,8 @@ func (TagCooccurrence) TableName() string { return "tag_cooccurrence" }
 // ========================================== ARTICLE VERSION TAG ========================================== //
 
 type ArticleVersionTag struct {
-	ArticleVersionID string `json:"article_version_id"`
-	TagID            string `json:"tag_id"`
+	ArticleVersionID uuid.UUID `json:"article_version_id"`
+	TagID            uuid.UUID `json:"tag_id"`
 }
 
 func (ArticleVersionTag) TableName() string { return "article_version_tags" }

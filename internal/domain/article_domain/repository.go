@@ -13,11 +13,12 @@ type Repository interface {
 	BeginTransaction(ctx context.Context) (pgx.Tx, error)
 	WithTX(tx pgx.Tx) *repository.Repository
 	Create(ctx context.Context, data entity.Article) (*entity.Article, error)
-	CreateArticleVersion(ctx context.Context, data entity.ArticleVersion) error
+	CreateArticleVersion(ctx context.Context, data entity.ArticleVersion) (*entity.ArticleVersion, error)
 	CreateTag(ctx context.Context, data entity.Tag) (*entity.Tag, error)
 	GetByNameTag(ctx context.Context, name string) (data entity.Tag, err error)
 	UpdateTag(ctx context.Context, data entity.Tag) error
 	DecrementTag(ctx context.Context, data entity.Tag) error
+	CreateArticleVersionTag(ctx context.Context, articleVersionID uuid.UUID, tagID uuid.UUID) error
 	CreateNewArticleVersion(ctx context.Context, data entity.ArticleVersion, newVersionNumber int64) (res entity.ArticleVersion, err error)
 	GetArticles(ctx context.Context, role string, currentUserID uuid.UUID, params model.GetArticlesRequest) ([]model.ArticleResponse, error)
 	GetArticleDetails(ctx context.Context, articleID uuid.UUID, role string, currentUserID uuid.UUID) (*model.ArticleDetailResponse, error)

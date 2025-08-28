@@ -3,8 +3,10 @@ package article_domain
 import (
 	"github.com/dimasbayuseno/cisdi-go-test/internal/model"
 	"github.com/dimasbayuseno/cisdi-go-test/pkg/exception"
+	"github.com/dimasbayuseno/cisdi-go-test/pkg/middleware"
 	"github.com/dimasbayuseno/cisdi-go-test/pkg/pkgutil"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ControllerHTTP struct {
@@ -29,6 +31,13 @@ func (c ControllerHTTP) Create(ctx *fiber.Ctx) error {
 	var req model.ArticleCreateRequest
 	err := ctx.BodyParser(&req)
 	exception.PanicIfNeeded(err)
+
+	user := ctx.Locals("user").(middleware.UserData)
+	id, err := uuid.Parse(user.ID)
+	if err != nil {
+		return err
+	}
+	req.AuthorID = id
 
 	err = c.svc.Create(ctx.UserContext(), req)
 	exception.PanicIfNeeded(err)

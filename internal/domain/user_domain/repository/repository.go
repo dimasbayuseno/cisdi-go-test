@@ -31,6 +31,11 @@ func (r Repository) Create(ctx context.Context, data entity.User) error {
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == constant.ErrSQLInvalidUUID || pgxError.Code == constant.ErrSQLFKViolation {
 				err = constant.ErrInvalidUUID
+				return err
+			}
+			if pgxError.Code == constant.ErrSQLUniqueViolation {
+				err = constant.ErrEmailAlreadyRegistered
+				return err
 			}
 		}
 

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/dimasbayuseno/cisdi-go-test/internal/entity"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"time"
@@ -72,5 +71,5 @@ type ArticleDetailResponse struct {
 	PublishedAt                 *time.Time      `json:"published_at"`
 	VersionNumber               int64           `json:"version_number"`
 	ArticleTagRelationshipScore decimal.Decimal `json:"article_tag_relationship_score"`
-	Tags                        []entity.Tag    `json:"tags"`
+	Tags                        []TagResponse   `json:"tags"`
 }

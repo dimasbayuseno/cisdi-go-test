@@ -43,13 +43,13 @@ func (r Repository) GetByNameTag(ctx context.Context, name string) (data entity.
 	err = r.db.QueryRow(ctx, query, name).Scan(&data.ID, &data.Name, &data.UsageCount, &data.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = pgx.ErrNoRows
+			return data, constant.ErrTagNotFound
 		}
 
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == constant.ErrSQLInvalidUUID {
-				err = constant.ErrTagNotFound
+				return data, constant.ErrTagNotFound
 			}
 		}
 		err = fmt.Errorf("tag.repository.GetByName: failed to get tag: %w", err)

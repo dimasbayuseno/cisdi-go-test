@@ -10,11 +10,11 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (r Repository) CreateArticleVersionTag(ctx context.Context, data entity.Tag) error {
+func (r Repository) CreateArticleVersionTag(ctx context.Context, articleVersionID uuid.UUID, tagID uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO article_version_tags (article_version_id, tag_id) 
 		VALUES ($1, $2)`,
-		data.Name, data.UsageCount)
+		articleVersionID, tagID)
 
 	if err != nil {
 		var pgxError *pgconn.PgError

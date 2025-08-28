@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/article_domain/repository"
+	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/article_domain"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/entity"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/model"
 	"github.com/dimasbayuseno/cisdi-go-test/pkg/constant"
@@ -15,10 +15,10 @@ import (
 )
 
 type Service struct {
-	repo repository.Repository
+	repo article_domain.Repository
 }
 
-func New(repo repository.Repository) *Service {
+func New(repo article_domain.Repository) *Service {
 	return &Service{repo: repo}
 }
 
@@ -32,6 +32,7 @@ func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (er
 
 	if !entity.IsArticleStatusValid(req.Status) {
 		err = constant.ErrInvalidStatusArticle
+		return
 	}
 
 	data := entity.Article{
@@ -49,12 +50,16 @@ func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (er
 	tx, err := s.repo.BeginTransaction(ctx)
 	if err != nil {
 		err = constant.ErrFailedTx
+		return
 	}
-
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		}
+	}()
 	res, err := s.repo.WithTX(tx).Create(ctx, data)
 	if err != nil {
 		err = fmt.Errorf("article.service.Create: failed to create article: %w", err)
-		tx.Rollback(ctx)
 		return
 	}
 
@@ -66,45 +71,40 @@ func (s Service) Create(ctx context.Context, req model.ArticleCreateRequest) (er
 		ArticleTagRelationshipScore: decimal.Zero,
 	}
 
-	err = s.repo.WithTX(tx).CreateArticleVersion(ctx, dataArticleVersion)
+	articleVersion, err := s.repo.WithTX(tx).CreateArticleVersion(ctx, dataArticleVersion)
 	if err != nil {
 		err = fmt.Errorf("article_version.service.Create: failed to create article_version: %w", err)
-		tx.Rollback(ctx)
 		return
 	}
 	for _, tagName := range req.TagNames {
 		var dataTag entity.Tag
-		existingTag, err := s.repo.GetByNameTag(ctx, tagName)
+		existingTag, err := s.repo.WithTX(tx).GetByNameTag(ctx, tagName)
 		if err != nil && errors.Is(err, constant.ErrTagNotFound) {
 			newTag := entity.Tag{
 				Name:       tagName,
 				UsageCount: 1,
 			}
-			createdTag, err := s.repo.CreateTag(ctx, newTag)
+			createdTag, err := s.repo.WithTX(tx).CreateTag(ctx, newTag)
 			if err != nil {
-				tx.Rollback(ctx)
 				return fmt.Errorf("failed to create tag %s: %w", tagName, err)
 			}
 			dataTag = *createdTag
 		} else if err != nil {
-			tx.Rollback(ctx)
 			return fmt.Errorf("failed to get tag %s: %w", tagName, err)
 		} else {
 			existingTag.LastUsedAt = time.Now()
 			err = s.repo.UpdateTag(ctx, existingTag)
 			if err != nil {
-				tx.Rollback(ctx)
 				return fmt.Errorf("failed to update tag %s: %w", tagName, err)
 			}
 			dataTag = existingTag
 		}
-		err = s.repo.CreateArticleVersionTag(ctx, dataTag)
+		err = s.repo.WithTX(tx).CreateArticleVersionTag(ctx, articleVersion.ID, dataTag.ID)
 		if err != nil {
-			tx.Rollback(ctx)
-			return fmt.Errorf("failed to update tag %s: %w", tagName, err)
+			return fmt.Errorf("failed to create article version tag for %s: %w", tagName, err)
 		}
 	}
-
+	tx.Commit(ctx)
 	return
 }
 
@@ -119,6 +119,13 @@ func (s Service) GetDetailArticleBySlug(ctx context.Context, slug string) (respo
 	}
 
 	tags, err := s.repo.GetTagsByArticleVersionID(ctx, articleVersion.ID)
+	var tagResponses []model.TagResponse
+	for _, tag := range tags {
+		tagResponses = append(tagResponses, model.TagResponse{
+			ID:   tag.ID,
+			Name: tag.Name,
+		})
+	}
 
 	response = model.ArticleDetailResponse{
 		ID:            article.ID,
@@ -129,7 +136,7 @@ func (s Service) GetDetailArticleBySlug(ctx context.Context, slug string) (respo
 		Content:       articleVersion.Content,
 		PublishedAt:   article.PublishedAt,
 		VersionNumber: articleVersion.VersionNumber,
-		Tags:          tags,
+		Tags:          tagResponses,
 	}
 	return
 }

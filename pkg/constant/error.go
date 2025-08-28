@@ -12,16 +12,17 @@ const (
 )
 
 var (
-	ErrEmailAlreadyRegistered = &ErrWithCode{HTTPStatusCode: http.StatusConflict, Message: "email already registered"}
-	ErrEmailOrPasswordInvalid = &ErrWithCode{HTTPStatusCode: http.StatusBadRequest, Message: "email or password invalid"}
-	ErrInvalidUUID            = errors.New("invalid uuid length or format")
-	ErrUnauthorizedAccess     = &ErrWithCode{HTTPStatusCode: http.StatusUnauthorized, Message: "unauthorized access"}
-	ErrExampleNotFound        = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "example not found"}
-	ErrUserNotFound           = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "user not found"}
-	ErrTagNotFound            = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "tag not found"}
-	ErrArticleNotFound        = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "article not found"}
-	ErrFailedTx               = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "tag not found"}
-	ErrInvalidStatusArticle   = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "status invalid"}
+	ErrEmailAlreadyRegistered  = &ErrWithCode{HTTPStatusCode: http.StatusConflict, Message: "email or username already registered"}
+	ErrArticleSlugAlreadyExist = &ErrWithCode{HTTPStatusCode: http.StatusConflict, Message: "title / slug already existed"}
+	ErrEmailOrPasswordInvalid  = &ErrWithCode{HTTPStatusCode: http.StatusBadRequest, Message: "email or password invalid"}
+	ErrInvalidUUID             = errors.New("invalid uuid length or format")
+	ErrUnauthorizedAccess      = &ErrWithCode{HTTPStatusCode: http.StatusUnauthorized, Message: "unauthorized access"}
+	ErrExampleNotFound         = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "example not found"}
+	ErrUserNotFound            = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "user not found"}
+	ErrTagNotFound             = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "tag not found"}
+	ErrArticleNotFound         = &ErrWithCode{HTTPStatusCode: http.StatusNotFound, Message: "article not found"}
+	ErrFailedTx                = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "tag not found"}
+	ErrInvalidStatusArticle    = &ErrWithCode{HTTPStatusCode: http.StatusPreconditionFailed, Message: "status invalid"}
 )
 
 type ErrWithCode struct {

@@ -1,10 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE article_version_tags (
+                                      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                       article_version_id UUID NOT NULL REFERENCES article_versions(id) ON DELETE CASCADE,
                                       tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
                                       article_tag_relationship_score FLOAT DEFAULT 0.0,
-                                      PRIMARY KEY (article_version_id, tag_id)
+                                      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                                      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                                      UNIQUE(article_version_id, tag_id)
 );
 
 CREATE INDEX idx_article_version_tags_article_version_id ON article_version_tags(article_version_id);

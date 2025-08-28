@@ -1,12 +1,17 @@
 package server
 
 import (
+	"github.com/dimasbayuseno/cisdi-go-test/config"
+	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/article_domain"
+	article_repository "github.com/dimasbayuseno/cisdi-go-test/internal/domain/article_domain/repository"
+	article_service "github.com/dimasbayuseno/cisdi-go-test/internal/domain/article_domain/service"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/example_domain"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/example_domain/repository"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/example_domain/service"
 	"github.com/dimasbayuseno/cisdi-go-test/internal/domain/user_domain"
 	user_repository "github.com/dimasbayuseno/cisdi-go-test/internal/domain/user_domain/repository"
 	user_service "github.com/dimasbayuseno/cisdi-go-test/internal/domain/user_domain/service"
+	"github.com/dimasbayuseno/cisdi-go-test/pkg/middleware"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -23,8 +28,13 @@ func (s *Server) Routes() {
 	userSvc := user_service.New(userRepo)
 	userCtrl := user_domain.New(userSvc)
 
+	articleRepo := article_repository.New(s.db)
+	articleSvc := article_service.New(articleRepo)
+	articleCtrl := article_domain.New(articleSvc)
+
 	s.RoutesExample(api, exampleCtrl)
 	s.RoutesUser(api, userCtrl)
+	s.RoutesArticle(api, articleCtrl)
 }
 
 func (s Server) RoutesExample(route fiber.Router, ctrl *example_domain.ControllerHTTP) {
@@ -40,8 +50,14 @@ func (s Server) RoutesUser(route fiber.Router, ctrl *user_domain.ControllerHTTP)
 	v1 := route.Group("/v1")
 	userV1 := v1.Group("/user")
 	userV1.Post("/register", ctrl.Create)
-	userV1.Get("/login", ctrl.Login)
+	userV1.Post("/login", ctrl.Login)
 	userV1.Get("/:id", ctrl.GetByID)
 	userV1.Put("/:id", ctrl.Update)
 	userV1.Delete("/:id", ctrl.Delete)
+}
+
+func (s Server) RoutesArticle(route fiber.Router, ctrl *article_domain.ControllerHTTP) {
+	v1 := route.Group("/v1")
+	articleV1 := v1.Group("/article")
+	articleV1.Post("/create", middleware.JWTMiddleware(config.Get().JwtSecret), ctrl.Create)
 }

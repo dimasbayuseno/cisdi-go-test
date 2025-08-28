@@ -49,6 +49,9 @@ func (r Repository) Create(ctx context.Context, data entity.Article) (*entity.Ar
 			if pgxError.Code == constant.ErrSQLInvalidUUID || pgxError.Code == constant.ErrSQLFKViolation {
 				err = constant.ErrInvalidUUID
 			}
+			if pgxError.Code == constant.ErrSQLUniqueViolation {
+				err = constant.ErrArticleSlugAlreadyExist
+			}
 		}
 		err = fmt.Errorf("article.repository.Create: failed to create article: %w", err)
 		return nil, err
@@ -275,7 +278,7 @@ func (r Repository) GetArticleDetails(ctx context.Context, articleID uuid.UUID, 
 func (r Repository) GetArticleBySlug(ctx context.Context, slug string) (data entity.Article, err error) {
 	err = r.db.QueryRow(ctx, `SELECT id, author_id, title, slug, status, published_at FROM articles WHERE slug = $1 AND status = $2`, slug, entity.ArticleStatusPublished).Scan(&data.ID, &data.AuthorID, &data.Title, &data.Slug, &data.Status, &data.PublishedAt)
 	if err != nil {
-		return data, fmt.Errorf("repository.GetLastArticleVersionNumber: failed to get last version number: %w", err)
+		return data, fmt.Errorf("repository.GetArticleBySlug: failed to get article by slug: %w", err)
 	}
 
 	return data, nil
